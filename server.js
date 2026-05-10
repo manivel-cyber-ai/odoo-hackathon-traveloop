@@ -215,6 +215,31 @@ ensureUsersRoleColumn().catch((err) => {
   console.error('Failed to ensure users.is_admin column:', err.message);
 });
 
+// ==================== FALLBACK IMAGE ROUTE ====================
+app.get('/api/image/placeholder/:city', (req, res) => {
+  const city = decodeURIComponent(req.params.city);
+  const colors = ['FF6B6B', '4ECDC4', '45B7D1', 'FFA07A', '98D8C8', 'F7DC6F', 'BB8FCE', '85C1E2', 'F8B88B', '82E0AA'];
+  let hash = 0;
+  for (let i = 0; i < city.length; i++) {
+    hash = ((hash << 5) - hash) + city.charCodeAt(i);
+    hash = hash & hash;
+  }
+  const color = colors[Math.abs(hash) % colors.length];
+  const firstChar = city.charAt(0).toUpperCase();
+  
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="800" height="600">
+      <rect fill="#${color}" width="800" height="600"/>
+      <text x="50%" y="45%" font-size="100" fill="white" text-anchor="middle" font-weight="bold" font-family="Arial">${firstChar}</text>
+      <text x="50%" y="60%" font-size="32" fill="rgba(255,255,255,0.9)" text-anchor="middle" font-family="Arial">${city}</text>
+    </svg>
+  `;
+  
+  res.set('Content-Type', 'image/svg+xml');
+  res.set('Cache-Control', 'public, max-age=86400');
+  res.send(svg);
+});
+
 // ==================== AUTH ENDPOINTS ====================
 app.post('/api/auth/register', async (req, res) => {
   const { name, email, password, phone, city, country, info } = req.body;
