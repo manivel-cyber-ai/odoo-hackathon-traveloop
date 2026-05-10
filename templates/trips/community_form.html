@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Share a Story - Traveloop{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-8">
+  <h1 class="text-3xl font-bold text-gray-900 mb-6"><i class="fas fa-edit text-purple-600 mr-2"></i>Share Your Story</h1>
+  <div class="card p-6">
+    <form method="post">
+      {% csrf_token %}
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">Title *</label>
+          <input type="text" name="title" required
+            class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Your travel story title...">
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">City (optional)</label>
+          <select name="city" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="">— Not city-specific —</option>
+            {% for city in form.city.field.queryset %}
+            <option value="{{ city.id }}">{{ city.name }}, {{ city.country }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">Story *</label>
+          <textarea name="content" rows="6" required
+            class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Tell the community about your travel experience..."></textarea>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">Image URL (optional)</label>
+          <input type="url" name="image_url"
+            class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="https://...">
+        </div>
+        <div class="flex gap-3 pt-2">
+          <button type="submit" class="btn-primary px-8">Publish</button>
+          <a href="{% url 'community_list' %}" class="btn-secondary">Cancel</a>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

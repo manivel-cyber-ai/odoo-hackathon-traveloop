@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard - Traveloop{% endblock %}
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-8">
+  <div class="flex items-center justify-between mb-8">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900">Welcome back, {{ user.first_name|default:user.username }}!</h1>
+      <p class="text-gray-500 mt-1">Ready for your next adventure?</p>
+    </div>
+    <a href="{% url 'trip_create' %}" class="btn-primary">
+      <i class="fas fa-plus mr-2"></i>New Trip
+    </a>
+  </div>
+
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+    <div class="card p-5 text-center">
+      <div class="text-3xl font-bold text-blue-600">{{ total_trips }}</div>
+      <div class="text-gray-500 text-sm mt-1">Total Trips</div>
+    </div>
+    <div class="card p-5 text-center">
+      <div class="text-3xl font-bold text-green-600">{{ top_cities|length }}</div>
+      <div class="text-gray-500 text-sm mt-1">Cities Available</div>
+    </div>
+    <div class="card p-5 text-center">
+      <div class="text-3xl font-bold text-purple-600">{{ community_posts|length }}</div>
+      <div class="text-gray-500 text-sm mt-1">Community Posts</div>
+    </div>
+    <div class="card p-5 text-center">
+      <div class="text-3xl font-bold text-orange-500">AI</div>
+      <div class="text-gray-500 text-sm mt-1">Smart Suggestions</div>
+    </div>
+  </div>
+
+  {% if recent_trips %}
+  <div class="mb-8">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-xl font-bold text-gray-900"><i class="fas fa-suitcase text-blue-500 mr-2"></i>Recent Trips</h2>
+      <a href="{% url 'trip_list' %}" class="text-blue-600 hover:underline text-sm">View all</a>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {% for trip in recent_trips %}
+      <a href="{% url 'trip_detail' trip.id %}" class="card hover:shadow-lg transition-shadow">
+        <div class="h-32 bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white text-4xl">
+          <i class="fas fa-plane"></i>
+        </div>
+        <div class="p-4">
+          <h3 class="font-bold text-gray-900 truncate">{{ trip.name }}</h3>
+          <p class="text-gray-500 text-sm mt-1">{{ trip.city_count }} stop{{ trip.city_count|pluralize }}</p>
+          {% if trip.start_date %}
+          <p class="text-gray-400 text-xs mt-1"><i class="fas fa-calendar mr-1"></i>{{ trip.start_date }}</p>
+          {% endif %}
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% else %}
+  <div class="mb-8 card p-10 text-center">
+    <i class="fas fa-globe text-6xl text-gray-200 mb-4"></i>
+    <h2 class="text-xl font-semibold text-gray-600 mb-2">No trips yet</h2>
+    <p class="text-gray-400 mb-4">Start planning your first adventure!</p>
+    <a href="{% url 'trip_create' %}" class="btn-primary">Create First Trip</a>
+  </div>
+  {% endif %}
+
+  <div class="mb-8">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-xl font-bold text-gray-900"><i class="fas fa-map-marker-alt text-green-500 mr-2"></i>Featured Destinations</h2>
+      <a href="{% url 'city_list' %}" class="text-blue-600 hover:underline text-sm">Explore all</a>
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      {% for city in top_cities %}
+      <a href="{% url 'city_detail' city.id %}" class="card hover:shadow-lg transition-shadow group">
+        <div class="h-24 bg-gradient-to-br from-green-400 to-teal-500 flex items-center justify-center text-white text-2xl group-hover:from-green-500 group-hover:to-teal-600 transition-all">
+          <i class="fas fa-city"></i>
+        </div>
+        <div class="p-2 text-center">
+          <div class="font-semibold text-gray-900 text-sm truncate">{{ city.name }}</div>
+          <div class="text-gray-400 text-xs truncate">{{ city.country }}</div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div>
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-xl font-bold text-gray-900"><i class="fas fa-users text-purple-500 mr-2"></i>Community Posts</h2>
+      <a href="{% url 'community_list' %}" class="text-blue-600 hover:underline text-sm">View all</a>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {% for post in community_posts %}
+      <div class="card p-4">
+        <div class="flex items-center gap-2 mb-2">
+          <div class="w-7 h-7 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-bold text-xs">
+            {{ post.user.username|first|upper }}
+          </div>
+          <span class="text-sm text-gray-600 font-medium">{{ post.user.username }}</span>
+          {% if post.city %}<span class="text-xs text-gray-400">• {{ post.city.name }}</span>{% endif %}
+        </div>
+        <h3 class="font-semibold text-gray-900 mb-1 truncate">{{ post.title }}</h3>
+        <p class="text-gray-500 text-sm line-clamp-2">{{ post.content }}</p>
+        <div class="flex items-center gap-2 mt-2 text-xs text-gray-400">
+          <i class="fas fa-heart text-red-400"></i> {{ post.likes }}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

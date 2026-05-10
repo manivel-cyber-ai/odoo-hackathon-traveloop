@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% block title %}My Profile - Traveloop{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-8">
+  <h1 class="text-3xl font-bold text-gray-900 mb-6"><i class="fas fa-user-circle text-blue-600 mr-2"></i>My Profile</h1>
+  <div class="card p-6">
+    <div class="flex items-center gap-4 mb-6">
+      <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-black text-3xl">
+        {{ user.username|first|upper }}
+      </div>
+      <div>
+        <h2 class="text-xl font-bold text-gray-900">{{ user.get_full_name|default:user.username }}</h2>
+        <p class="text-gray-500">@{{ user.username }}</p>
+        <p class="text-gray-400 text-sm">{{ user.email }}</p>
+      </div>
+    </div>
+    <form method="post">
+      {% csrf_token %}
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+          <input type="text" name="first_name" value="{{ form.first_name.value|default:'' }}"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+          <input type="text" name="last_name" value="{{ form.last_name.value|default:'' }}"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+        <input type="email" name="email" value="{{ form.email.value|default:'' }}"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+        <textarea name="bio" rows="3"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Tell us about yourself...">{{ form.bio.value|default:'' }}</textarea>
+      </div>
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Language Preference</label>
+        <select name="language" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="en" {% if form.language.value == 'en' %}selected{% endif %}>English</option>
+          <option value="es" {% if form.language.value == 'es' %}selected{% endif %}>Spanish</option>
+          <option value="fr" {% if form.language.value == 'fr' %}selected{% endif %}>French</option>
+          <option value="de" {% if form.language.value == 'de' %}selected{% endif %}>German</option>
+          <option value="ja" {% if form.language.value == 'ja' %}selected{% endif %}>Japanese</option>
+        </select>
+      </div>
+      <div class="flex gap-3">
+        <button type="submit" class="btn-primary">Save Changes</button>
+        <a href="{% url 'dashboard' %}" class="btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+  <div class="mt-6 card p-6">
+    <h3 class="font-semibold text-gray-800 mb-2"><i class="fas fa-chart-bar text-blue-500 mr-2"></i>Stats</h3>
+    <div class="flex gap-6">
+      <div class="text-center">
+        <div class="text-2xl font-bold text-blue-600">{{ user.trips.count }}</div>
+        <div class="text-sm text-gray-500">Trips</div>
+      </div>
+      <div class="text-center">
+        <div class="text-2xl font-bold text-green-600">{{ user.community_posts.count }}</div>
+        <div class="text-sm text-gray-500">Posts</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

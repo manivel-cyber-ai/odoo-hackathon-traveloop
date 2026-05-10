@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}{{ trip.name }} - Shared Trip{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+  <div class="text-center mb-8">
+    <div class="text-5xl mb-4"><i class="fas fa-share-alt text-blue-600"></i></div>
+    <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ trip.name }}</h1>
+    <p class="text-gray-500">Shared by {{ trip.user.get_full_name|default:trip.user.username }} &bull; {{ trip.city_count }} stops</p>
+  </div>
+  <div class="grid grid-cols-3 gap-4 mb-8">
+    <div class="card p-4 text-center"><div class="text-2xl font-bold text-blue-600">{{ trip.city_count }}</div><div class="text-sm text-gray-500">Cities</div></div>
+    <div class="card p-4 text-center"><div class="text-2xl font-bold text-green-600">{{ trip.duration_days }}</div><div class="text-sm text-gray-500">Days</div></div>
+    <div class="card p-4 text-center"><div class="text-2xl font-bold text-orange-500">${{ trip.total_cost|floatformat:0 }}</div><div class="text-sm text-gray-500">Estimated Cost</div></div>
+  </div>
+  <div class="space-y-4">
+    {% for stop in stops %}
+    <div class="card p-5">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">{{ forloop.counter }}</div>
+        <div>
+          <h2 class="font-bold text-gray-900">{{ stop.city.name }}, {{ stop.city.country }}</h2>
+          {% if stop.arrival_date %}<p class="text-gray-400 text-xs">{{ stop.arrival_date }} &rarr; {{ stop.departure_date }}</p>{% endif %}
+        </div>
+      </div>
+      {% for sa in stop.stop_activities.all %}
+      <div class="ml-11 flex items-center gap-2 text-sm text-gray-600 mb-1">
+        <i class="fas fa-dot-circle text-blue-300 text-xs"></i>{{ sa.activity.name }}
+      </div>
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+  <div class="text-center mt-8">
+    <a href="{% url 'signup' %}" class="btn-primary text-lg px-8 py-3">Plan Your Own Trip on Traveloop</a>
+  </div>
+</div>
+{% endblock %}

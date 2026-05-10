@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}{{ trip.name }} - View{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-3xl font-bold text-gray-900">{{ trip.name }}</h1>
+    <a href="{% url 'trip_detail' trip.id %}" class="btn-secondary"><i class="fas fa-edit mr-2"></i>Edit</a>
+  </div>
+  <div class="grid grid-cols-3 gap-4 mb-8">
+    <div class="card p-4 text-center"><div class="text-2xl font-bold text-blue-600">{{ trip.city_count }}</div><div class="text-sm text-gray-500">Stops</div></div>
+    <div class="card p-4 text-center"><div class="text-2xl font-bold text-green-600">{{ trip.duration_days }}</div><div class="text-sm text-gray-500">Days</div></div>
+    <div class="card p-4 text-center"><div class="text-2xl font-bold text-orange-500">${{ trip.total_cost|floatformat:0 }}</div><div class="text-sm text-gray-500">Total Cost</div></div>
+  </div>
+  <div class="space-y-6">
+    {% for stop in stops %}
+    <div class="card p-6">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold">{{ forloop.counter }}</div>
+        <div>
+          <h2 class="text-xl font-bold text-gray-900">{{ stop.city.name }}, {{ stop.city.country }}</h2>
+          {% if stop.arrival_date %}<p class="text-gray-400 text-sm">{{ stop.arrival_date }} &rarr; {{ stop.departure_date }}</p>{% endif %}
+        </div>
+      </div>
+      {% if stop.stop_activities.all %}
+      <div class="space-y-2">
+        {% for sa in stop.stop_activities.all %}
+        <div class="flex items-center gap-3 bg-gray-50 rounded-lg px-4 py-2">
+          <i class="fas fa-circle text-blue-400 text-xs"></i>
+          <span class="font-medium text-gray-800">{{ sa.activity.name }}</span>
+          <span class="text-gray-400 text-sm">${{ sa.activity.cost }}</span>
+          {% if sa.scheduled_date %}<span class="text-gray-400 text-sm">{{ sa.scheduled_date }}</span>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="text-gray-400 text-sm italic">No activities planned</p>
+      {% endif %}
+      <div class="mt-3 text-sm text-gray-400 flex gap-4">
+        <span>Transport: ${{ stop.transport_cost }}</span>
+        <span>Stay: ${{ stop.stay_cost }}</span>
+        <span>Stop total: ${{ stop.stop_total_cost|floatformat:0 }}</span>
+      </div>
+    </div>
+    {% empty %}
+    <div class="card p-10 text-center text-gray-400"><i class="fas fa-map text-4xl mb-3"></i><p>No stops planned yet.</p></div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

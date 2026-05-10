@@ -1,0 +1,30 @@
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.dashboard, name='dashboard'),
+    path('trips/', views.trip_list, name='trip_list'),
+    path('trips/create/', views.trip_create, name='trip_create'),
+    path('trips/<int:trip_id>/', views.trip_detail, name='trip_detail'),
+    path('trips/<int:trip_id>/edit/', views.trip_edit, name='trip_edit'),
+    path('trips/<int:trip_id>/delete/', views.trip_delete, name='trip_delete'),
+    path('trips/<int:trip_id>/view/', views.trip_view, name='trip_view'),
+    path('trips/<int:trip_id>/budget/', views.trip_budget, name='trip_budget'),
+    path('trips/<int:trip_id>/packing/', views.trip_packing, name='trip_packing'),
+    path('trips/<int:trip_id>/notes/', views.trip_notes, name='trip_notes'),
+    path('trips/<int:trip_id>/stops/add/', views.stop_add, name='stop_add'),
+    path('trips/<int:trip_id>/stops/<int:stop_id>/delete/', views.stop_delete, name='stop_delete'),
+    path('trips/<int:trip_id>/stops/<int:stop_id>/activities/add/', views.activity_add, name='activity_add'),
+    path('trips/<int:trip_id>/stops/<int:stop_id>/activities/<int:sa_id>/delete/', views.activity_delete, name='activity_delete'),
+    path('trips/<int:trip_id>/stops/reorder/', views.stop_reorder, name='stop_reorder'),
+    path('trips/<int:trip_id>/packing/<int:item_id>/toggle/', views.packing_toggle, name='packing_toggle'),
+    path('trips/<int:trip_id>/packing/<int:item_id>/delete/', views.packing_delete, name='packing_delete'),
+    path('trips/<int:trip_id>/notes/<int:note_id>/delete/', views.note_delete, name='note_delete'),
+    path('trips/<int:trip_id>/ai-suggest/<int:stop_id>/', views.ai_suggest, name='ai_suggest'),
+    path('trips/<int:trip_id>/ai-suggest/<int:stop_id>/add/', views.ai_add_activity, name='ai_add_activity'),
+    path('share/<uuid:share_token>/', views.trip_share, name='trip_share'),
+    path('community/', views.community_list, name='community_list'),
+    path('community/create/', views.community_create, name='community_create'),
+    path('community/<int:post_id>/delete/', views.community_delete, name='community_delete'),
+    path('community/<int:post_id>/like/', views.community_like, name='community_like'),
+]

@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block title %}Packing List - {{ trip.name }}{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 py-8">
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-3xl font-bold text-gray-900"><i class="fas fa-box text-blue-600 mr-2"></i>Packing List</h1>
+    <a href="{% url 'trip_detail' trip.id %}" class="btn-secondary"><i class="fas fa-arrow-left mr-2"></i>Back</a>
+  </div>
+  <h2 class="text-xl text-gray-500 mb-4">{{ trip.name }}</h2>
+
+  <div class="card p-4 mb-6">
+    <div class="flex items-center justify-between mb-2">
+      <span class="font-semibold text-gray-700">Progress</span>
+      <span class="text-sm text-gray-500">{{ packed_count }} / {{ total_count }} packed</span>
+    </div>
+    <div class="w-full bg-gray-200 rounded-full h-3">
+      {% if total_count %}<div class="bg-green-500 h-3 rounded-full transition-all" style="width: {% widthratio packed_count total_count 100 %}%"></div>{% endif %}
+    </div>
+  </div>
+
+  <div class="card p-5 mb-6">
+    <h3 class="font-bold text-gray-800 mb-3">Add Item</h3>
+    <form method="post" class="flex gap-3 flex-wrap">
+      {% csrf_token %}
+      <input type="text" name="name" required placeholder="Item name..."
+        class="flex-1 min-w-40 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+      <select name="category" class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        {% for val, label in categories %}<option value="{{ val }}">{{ label }}</option>{% endfor %}
+      </select>
+      <button type="submit" class="btn-primary">Add</button>
+    </form>
+  </div>
+
+  <div class="flex gap-2 flex-wrap mb-4">
+    <a href="?category=" class="text-sm px-3 py-1 rounded-full {% if not category %}bg-blue-600 text-white{% else %}bg-gray-200 text-gray-600{% endif %}">All</a>
+    {% for val, label in categories %}
+    <a href="?category={{ val }}" class="text-sm px-3 py-1 rounded-full {% if category == val %}bg-blue-600 text-white{% else %}bg-gray-200 text-gray-600{% endif %}">{{ label }}</a>
+    {% endfor %}
+  </div>
+
+  <div class="space-y-2">
+    {% for item in items %}
+    <div class="card px-4 py-3 flex items-center justify-between {% if item.is_packed %}bg-green-50{% endif %}">
+      <div class="flex items-center gap-3">
+        <button onclick="togglePacked({{ item.id }}, this)"
+          class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all
+            {% if item.is_packed %}bg-green-500 border-green-500 text-white{% else %}border-gray-300 hover:border-green-400{% endif %}"
+          data-url="{% url 'packing_toggle' trip.id item.id %}">
+          {% if item.is_packed %}<i class="fas fa-check text-xs"></i>{% endif %}
+        </button>
+        <span class="{% if item.is_packed %}line-through text-gray-400{% else %}text-gray-800{% endif %} font-medium">{{ item.name }}</span>
+        <span class="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{{ item.get_category_display }}</span>
+      </div>
+      <form method="post" action="{% url 'packing_delete' trip.id item.id %}">
+        {% csrf_token %}
+        <button type="submit" class="text-red-400 hover:text-red-600"><i class="fas fa-trash text-sm"></i></button>
+      </form>
+    </div>
+    {% empty %}
+    <div class="card p-10 text-center text-gray-400"><i class="fas fa-box-open text-4xl mb-3"></i><p>No items yet.</p></div>
+    {% endfor %}
+  </div>
+</div>
+<script>
+function togglePacked(id, btn) {
+  fetch(btn.dataset.url, {method:'POST', headers:{'X-CSRFToken':'{{ csrf_token }}'}})
+    .then(r => r.json()).then(d => { location.reload(); });
+}
+</script>
+{% endblock %}

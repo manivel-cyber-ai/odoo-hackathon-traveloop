@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block title %}Budget - {{ trip.name }}{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-3xl font-bold text-gray-900"><i class="fas fa-chart-pie text-blue-600 mr-2"></i>Budget</h1>
+    <a href="{% url 'trip_detail' trip.id %}" class="btn-secondary"><i class="fas fa-arrow-left mr-2"></i>Back</a>
+  </div>
+  <h2 class="text-xl font-semibold text-gray-600 mb-6">{{ trip.name }}</h2>
+
+  {% if over_budget %}
+  <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+    <i class="fas fa-exclamation-circle mr-2"></i>
+    Over budget! Limit: ${{ trip.budget_limit }} &mdash; Total: ${{ grand_total|floatformat:2 }}
+  </div>
+  {% endif %}
+
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+    <div class="card p-4 text-center">
+      <div class="text-2xl font-bold text-blue-600">${{ grand_total|floatformat:2 }}</div>
+      <div class="text-sm text-gray-500">Total</div>
+    </div>
+    <div class="card p-4 text-center">
+      <div class="text-2xl font-bold text-orange-500">${{ transport_total|floatformat:2 }}</div>
+      <div class="text-sm text-gray-500">Transport</div>
+    </div>
+    <div class="card p-4 text-center">
+      <div class="text-2xl font-bold text-green-600">${{ stay_total|floatformat:2 }}</div>
+      <div class="text-sm text-gray-500">Accommodation</div>
+    </div>
+    <div class="card p-4 text-center">
+      <div class="text-2xl font-bold text-purple-600">${{ activity_total|floatformat:2 }}</div>
+      <div class="text-sm text-gray-500">Activities</div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+    <div class="card p-6">
+      <h3 class="font-bold text-gray-800 mb-4">Spending Breakdown</h3>
+      <canvas id="pieChart" height="200"></canvas>
+    </div>
+    <div class="card p-6">
+      <h3 class="font-bold text-gray-800 mb-4">Cost per Stop</h3>
+      <canvas id="barChart" height="200"></canvas>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="p-5 border-b border-gray-100 font-bold text-gray-800">Stop Breakdown</div>
+    {% for stop in stops %}
+    <div class="p-4 border-b border-gray-50 last:border-0">
+      <div class="flex items-center justify-between">
+        <div class="font-semibold text-gray-800">{{ stop.city.name }}</div>
+        <div class="font-bold text-blue-600">${{ stop.stop_total_cost|floatformat:2 }}</div>
+      </div>
+      <div class="text-xs text-gray-400 mt-1">
+        Transport: ${{ stop.transport_cost }} &bull; Stay: ${{ stop.stay_cost }}
+        &bull; Activities: ${% with act_total=0 %}{% for sa in stop.stop_activities.all %}{{ sa.activity.cost|add:act_total }}{% endfor %}{% endwith %}
+      </div>
+    </div>
+    {% empty %}
+    <div class="p-8 text-center text-gray-400">No stops added yet.</div>
+    {% endfor %}
+  </div>
+</div>
+
+<script>
+const pieCtx = document.getElementById('pieChart').getContext('2d');
+new Chart(pieCtx, {
+  type: 'doughnut',
+  data: {
+    labels: ['Transport', 'Accommodation', 'Activities'],
+    datasets: [{
+      data: [{{ transport_total }}, {{ stay_total }}, {{ activity_total }}],
+      backgroundColor: ['#f97316', '#22c55e', '#a855f7'],
+      borderWidth: 2, borderColor: '#fff'
+    }]
+  },
+  options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+});
+
+const barCtx = document.getElementById('barChart').getContext('2d');
+new Chart(barCtx, {
+  type: 'bar',
+  data: {
+    labels: [{% for s in stops %}'{{ s.city.name }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+    datasets: [{
+      label: 'Total Cost ($)',
+      data: [{% for s in stops %}{{ s.stop_total_cost|floatformat:0 }}{% if not forloop.last %},{% endif %}{% endfor %}],
+      backgroundColor: '#3b82f6', borderRadius: 6
+    }]
+  },
+  options: { responsive: true, scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}My Trips - Traveloop{% endblock %}
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 py-8">
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-3xl font-bold text-gray-900"><i class="fas fa-suitcase text-blue-600 mr-2"></i>My Trips</h1>
+    <a href="{% url 'trip_create' %}" class="btn-primary"><i class="fas fa-plus mr-2"></i>New Trip</a>
+  </div>
+  {% if trips %}
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for trip in trips %}
+    <div class="card hover:shadow-lg transition-shadow">
+      <div class="h-40 bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white text-5xl relative">
+        <i class="fas fa-plane"></i>
+        {% if trip.is_public %}
+        <span class="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">Public</span>
+        {% endif %}
+      </div>
+      <div class="p-5">
+        <h2 class="text-xl font-bold text-gray-900 mb-1">{{ trip.name }}</h2>
+        {% if trip.description %}
+        <p class="text-gray-500 text-sm mb-3 line-clamp-2">{{ trip.description }}</p>
+        {% endif %}
+        <div class="flex items-center gap-4 text-sm text-gray-400 mb-4">
+          <span><i class="fas fa-map-marker-alt mr-1"></i>{{ trip.city_count }} stop{{ trip.city_count|pluralize }}</span>
+          {% if trip.start_date %}<span><i class="fas fa-calendar mr-1"></i>{{ trip.start_date }}</span>{% endif %}
+          <span><i class="fas fa-dollar-sign mr-1"></i>${{ trip.total_cost|floatformat:0 }}</span>
+        </div>
+        <div class="flex gap-2 flex-wrap">
+          <a href="{% url 'trip_detail' trip.id %}" class="btn-primary text-sm py-1.5">
+            <i class="fas fa-edit mr-1"></i>Plan
+          </a>
+          <a href="{% url 'trip_budget' trip.id %}" class="btn-secondary text-sm py-1.5">
+            <i class="fas fa-chart-pie mr-1"></i>Budget
+          </a>
+          <a href="{% url 'trip_packing' trip.id %}" class="btn-secondary text-sm py-1.5">
+            <i class="fas fa-box mr-1"></i>Pack
+          </a>
+          <a href="{% url 'trip_edit' trip.id %}" class="text-sm text-gray-400 hover:text-blue-600 py-1.5 px-2">
+            <i class="fas fa-cog"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="card p-12 text-center">
+    <i class="fas fa-globe text-7xl text-gray-200 mb-4"></i>
+    <h2 class="text-2xl font-semibold text-gray-600 mb-2">No trips planned yet</h2>
+    <p class="text-gray-400 mb-6">Create your first trip and start exploring!</p>
+    <a href="{% url 'trip_create' %}" class="btn-primary text-lg px-8 py-3">Create First Trip</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
