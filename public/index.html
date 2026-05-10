@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Traveloop – Travel Planning Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=DM+Mono:wght@400;500&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      font-family: 'Source Serif 4', serif;
+      background: linear-gradient(160deg, #0b1020, #11182d);
+      background-attachment: fixed;
+      color: #eef2ff;
+    }
+
+    :root {
+      --bg: #0b1020;
+      --surface: rgba(19, 25, 45, 0.86);
+      --text: #eef2ff;
+      --muted: #9aa7c4;
+      --gold: #f7c948;
+      --teal: #46d6b2;
+      --primary: #6ea8ff;
+      --secondary: rgba(255,255,255,0.05);
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+    }
+
+    .wrap { max-width: 1400px; margin: 0 auto; padding: 20px; }
+    .shell { display: grid; grid-template-columns: 300px 1fr; gap: 20px; min-height: 100vh; }
+    @media (max-width: 900px) { .shell { grid-template-columns: 1fr; } }
+
+    .sidebar {
+      background: var(--surface);
+      border-radius: 24px;
+      padding: 20px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+      border: 1px solid rgba(255,255,255,0.09);
+    }
+
+    .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; cursor: pointer; }
+    .brand-mark {
+      width: 50px;
+      height: 50px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--gold), var(--teal));
+      display: grid;
+      place-items: center;
+      color: #0c1020;
+      font-weight: 800;
+      font-size: 1rem;
+    }
+    .brand h1 { margin: 0; font-family: 'Syne'; font-size: 1.3rem; }
+
+    .nav-group { display: grid; gap: 8px; margin-top: 16px; }
+    .nav-btn {
+      padding: 12px 14px;
+      background: var(--secondary);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      color: var(--text);
+      cursor: pointer;
+      font-family: 'Syne';
+      transition: all 0.2s;
+    }
+    .nav-btn:hover { background: rgba(255,255,255,0.08); }
+    .nav-btn.active {
+      border-color: var(--gold);
+      background: rgba(247, 201, 72, 0.1);
+    }
+
+    .main {
+      background: var(--surface);
+      border-radius: 24px;
+      padding: 24px;
+      border: 1px solid rgba(255,255,255,0.09);
+    }
+
+    .card {
+      background: rgba(255,255,255,0.035);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .card h3 { margin: 0 0 12px; font-family: 'Syne'; font-size: 1.2rem; }
+    .card p { margin: 0; color: var(--muted); }
+
+    .btn {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-family: 'Syne';
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--gold), #f5db79);
+      color: #0d1020;
+      box-shadow: 0 8px 24px rgba(247, 201, 72, 0.3);
+    }
+    .btn-primary:hover { transform: translateY(-2px); }
+
+    .btn-secondary {
+      background: var(--secondary);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--text);
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,0.08); }
+
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 0.9rem; }
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.05);
+      color: var(--text);
+      font-family: inherit;
+    }
+    .form-group input::placeholder { color: rgba(154,167,196,0.7); }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
+    .grid.two { grid-template-columns: repeat(2, 1fr); }
+    @media (max-width: 900px) { .grid.two { grid-template-columns: 1fr; } }
+
+    .trip-item {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .trip-item:hover { background: rgba(255,255,255,0.08); }
+    .trip-item h4 { margin: 0 0 8px; }
+    .trip-item p { margin: 0; font-size: 0.85rem; }
+
+    .post-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .post-card img { max-width: 100%; height: auto; border-radius: 8px; margin: 8px 0; }
+
+    .hidden { display: none !important; }
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(8, 12, 24, 0.95);
+      color: var(--text);
+      padding: 12px 20px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.08);
+      z-index: 100;
+      animation: slide 0.3s ease;
+    }
+    @keyframes slide { from { transform: translateX(-50%) translateY(100px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    .modal.show { opacity: 1; pointer-events: auto; }
+    .modal-content {
+      background: var(--surface);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 20px;
+      padding: 24px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="shell">
+      <!-- SIDEBAR -->
+      <aside class="sidebar">
+        <div class="brand" onclick="app.route('/')">
+          <div class="brand-mark">TL</div>
+          <div>
+            <h1>Traveloop</h1>
+            <small style="color:var(--muted);">Travel Planning</small>
+          </div>
+        </div>
+
+        <div id="authSection"></div>
+
+        <div class="nav-group" id="mainNav"></div>
+      </aside>
+
+      <!-- MAIN -->
+      <main class="main">
+        <section id="content"></section>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:3000/api';
+
+    const app = {
+      currentUser: null,
+      currentRoute: '/',
+      cities: [],
+      trips: [],
+
+      async init() {
+        await this.loadCities();
+        await this.checkAuth();
+        this.renderNav();
+        this.route('/');
+      },
+
+      async loadCities() {
+        try {
+          const res = await fetch(`${API_URL}/cities`);
+          this.cities = await res.json();
+        } catch (e) {
+          console.error('Failed to load cities:', e);
+        }
+      },
+
+      async checkAuth() {
+        try {
+          const res = await fetch(`${API_URL}/auth/me`);
+          if (res.ok) {
+            this.currentUser = await res.json();
+            this.loadTrips();
+          }
+        } catch (e) {
+          console.log('Not authenticated');
+        }
+      },
+
+      async loadTrips() {
+        if (!this.currentUser) return;
+        try {
+          const res = await fetch(`${API_URL}/trips`);
+          this.trips = await res.json();
+        } catch (e) {
+          console.error('Failed to load trips:', e);
+        }
+      },
+
+      route(path) {
+        this.currentRoute = path;
+        const [route, id] = path.split('/').filter(Boolean);
+
+        if (!this.currentUser && route !== 'login' && route !== 'register') {
+          this.route('/login');
+          return;
+        }
+
+        if (route === 'admin' && !this.currentUser?.isAdmin) {
+          this.toast('Admin access required');
+          this.route('/');
+          return;
+        }
+
+        if (route === 'login') this.renderLogin();
+        else if (route === 'register') this.renderRegister();
+        else if (route === 'trips') this.renderTrips();
+        else if (route === 'trip' && id) this.renderTripDetail(id);
+        else if (route === 'cities') this.renderCities();
+        else if (route === 'community') this.renderCommunity();
+        else if (route === 'admin') this.renderAdmin();
+        else if (route === 'profile') this.renderProfile();
+        else this.renderHome();
+
+        this.renderNav();
+      },
+
+      renderNav() {
+        const nav = document.getElementById('mainNav');
+        const auth = document.getElementById('authSection');
+
+        if (!this.currentUser) {
+          auth.innerHTML = `
+            <button class="btn btn-primary" style="width:100%; margin-bottom:10px;" onclick="app.route('/login')">Sign In</button>
+            <button class="btn btn-secondary" style="width:100%;" onclick="app.route('/register')">Register</button>
+          `;
+          nav.innerHTML = '';
+          return;
+        }
+
+        auth.innerHTML = `
+          <div style="background:rgba(255,255,255,0.04); border-radius:10px; padding:10px; margin-bottom:15px;">
+            <p style="margin:0; font-size:0.9rem;"><strong>${this.currentUser.name}</strong></p>
+            <small style="color:var(--muted);">${this.currentUser.email}</small>
+            <button class="btn btn-secondary" style="width:100%; margin-top:8px; padding:8px;" onclick="app.logout()">Sign Out</button>
+          </div>
+        `;
+
+        nav.innerHTML = `
+          <button class="nav-btn ${this.currentRoute === '/' ? 'active' : ''}" onclick="app.route('/')">Home</button>
+          <button class="nav-btn ${this.currentRoute.startsWith('/trips') ? 'active' : ''}" onclick="app.route('/trips')">Trips</button>
+          <button class="nav-btn ${this.currentRoute === '/cities' ? 'active' : ''}" onclick="app.route('/cities')">Cities</button>
+          <button class="nav-btn ${this.currentRoute === '/community' ? 'active' : ''}" onclick="app.route('/community')">Community</button>
+          <button class="nav-btn ${this.currentRoute === '/profile' ? 'active' : ''}" onclick="app.route('/profile')">Profile</button>
+          ${this.currentUser?.isAdmin ? `<button class="nav-btn ${this.currentRoute === '/admin' ? 'active' : ''}" onclick="app.route('/admin')">Admin</button>` : ''}
+        `;
+      },
+
+      renderHome() {
+        const html = `
+          <div class="card">
+            <h3>Welcome back, ${this.currentUser?.name || 'Traveler'}!</h3>
+            <p>Plan multi-city trips, track budgets, and share experiences with the community.</p>
+            <div style="display:flex; gap:10px; margin-top:15px; flex-wrap:wrap;">
+              <button class="btn btn-primary" onclick="app.showCreateTripModal()">+ New Trip</button>
+              <button class="btn btn-secondary" onclick="app.route('/trips')">View Trips</button>
+              <button class="btn btn-secondary" onclick="app.route('/cities')">Explore Cities</button>
+            </div>
+          </div>
+
+          <h3 style="margin-top:20px;">Recent Trips</h3>
+          <div id="recentTrips" class="grid"></div>
+        `;
+
+        document.getElementById('content').innerHTML = html;
+
+        const recentHTML = this.trips.slice(0, 3).map(trip => `
+          <div class="trip-item" onclick="app.route('/trip/${trip.id}')">
+            <h4>${trip.name}</h4>
+            <p>${trip.description}</p>
+            <small style="color:var(--muted);">${trip.stop_count || 0} stops · $${trip.budget}</small>
+          </div>
+        `).join('');
+
+        document.getElementById('recentTrips').innerHTML = recentHTML || '<p style="color:var(--muted);">No trips yet</p>';
+      },
+
+      renderTrips() {
+        const html = `
+          <div class="card">
+            <h3>My Trips</h3>
+            <button class="btn btn-primary" onclick="app.showCreateTripModal()" style="margin-top:10px;">+ Create Trip</button>
+          </div>
+
+          <div id="tripsList" class="grid"></div>
+        `;
+
+        document.getElementById('content').innerHTML = html;
+
+        const tripsHTML = this.trips.map(trip => `
+          <div class="trip-item" onclick="app.route('/trip/${trip.id}')">
+            <h4>${trip.name}</h4>
+            <p>${trip.description}</p>
+            <div style="margin-top:10px; display:flex; justify-content:space-between; font-size:0.85rem;">
+              <span>📅 ${trip.start_date}</span>
+              <span>💰 $${trip.budget}</span>
+            </div>
+          </div>
+        `).join('');
+
+        document.getElementById('tripsList').innerHTML = tripsHTML || '<p style="color:var(--muted);">No trips yet</p>';
+      },
+
+      renderTripDetail(tripId) {
+        const trip = this.trips.find(t => t.id === tripId);
+        if (!trip) return this.renderTrips();
+
+        const html = `
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <div>
+              <h2 style="margin:0;">${trip.name}</h2>
+              <p style="color:var(--muted);">${trip.description}</p>
+            </div>
+            <button class="btn btn-secondary" onclick="app.route('/trips')">← Back</button>
+          </div>
+
+          <div class="grid two">
+            <div class="card">
+              <h4>Trip Info</h4>
+              <p><strong>Start:</strong> ${trip.start_date}</p>
+              <p><strong>End:</strong> ${trip.end_date}</p>
+              <p><strong>Budget:</strong> $${trip.budget}</p>
+            </div>
+            <div class="card">
+              <h4>Options</h4>
+              <button class="btn btn-secondary" style="width:100%; margin-bottom:8px;" onclick="app.showAddStopModal('${trip.id}')">+ Add City</button>
+              <button class="btn btn-secondary" style="width:100%; margin-bottom:8px;" onclick="app.showCreatePostModal('${trip.id}')">Share Experience</button>
+              <button class="btn btn-secondary" style="width:100%;" onclick="app.deleteTrip('${trip.id}')">Delete Trip</button>
+            </div>
+          </div>
+
+          <h3 style="margin-top:20px;">Itinerary</h3>
+          <div id="stopsList"></div>
+        `;
+
+        document.getElementById('content').innerHTML = html;
+
+        // Load and display stops
+        fetch(`${API_URL}/trips/${tripId}`)
+          .then(r => r.json())
+          .then(data => {
+            const stopsHTML = (data.stops || []).map(stop => {
+              const city = this.cities.find(c => c.id === stop.city_id);
+              return `
+                <div class="card">
+                  <h4>${city?.name || 'Unknown City'}</h4>
+                  <p><strong>Arrival:</strong> ${stop.arrival_date}</p>
+                  <p><strong>Departure:</strong> ${stop.depart_date}</p>
+                  <p><strong>Transport:</strong> $${stop.transport_cost}</p>
+                  <p><strong>Stay:</strong> $${stop.stay_cost}</p>
+                </div>
+              `;
+            }).join('');
+            document.getElementById('stopsList').innerHTML = stopsHTML || '<p style="color:var(--muted);">No stops added</p>';
+          });
+      },
+
+      renderCities() {
+        const html = `
+          <div class="card">
+            <h3>Explore Cities</h3>
+            <input type="text" class="form-group" placeholder="Search cities..." id="citySearch" style="padding:10px 12px; border:1px solid rgba(255,255,255,0.1); border-radius:8px; background:rgba(255,255,255,0.05); color:var(--text); width:100%;" />
+          </div>
+
+          <div id="citiesList" class="grid"></div>
+        `;
+
+        document.getElementById('content').innerHTML = html;
+
+        const citiesHTML = this.cities.map(city => `
+          <div class="card">
+            <img src="${city.image || ''}" alt="${city.name}" style="width:100%; height:160px; object-fit:cover; border-radius:10px; margin-bottom:10px; background:rgba(255,255,255,0.06);" />
+            <h4>${city.name}</h4>
+            <p style="margin:5px 0;"><small>${city.country} · ${city.region}</small></p>
+            <p style="margin:8px 0; color:var(--muted); font-size:0.9rem;">${city.description}</p>
+            <div style="display:flex; gap:8px; margin-top:10px;">
+              <span class="badge" style="background:rgba(247,201,72,0.2); color:var(--gold); padding:4px 8px; border-radius:4px; font-size:0.85rem;">💰 ${city.cost_index}</span>
+              <span class="badge" style="background:rgba(70,214,178,0.2); color:var(--teal); padding:4px 8px; border-radius:4px; font-size:0.85rem;">⭐ ${city.popularity}</span>
+            </div>
+          </div>
+        `).join('');
+
+        document.getElementById('citiesList').innerHTML = citiesHTML;
+      },
+
+      renderCommunity() {
+        const html = `
+          <div class="card">
+            <h3>Community Experiences</h3>
+            <p style="color:var(--muted);">See what other travelers are sharing about their trips.</p>
+          </div>
+
+          <div id="postsList"></div>
+        `;
+
+        document.getElementById('content').innerHTML = html;
+
+        fetch(`${API_URL}/posts`)
+          .then(r => r.json())
+          .then(posts => {
+            const postsHTML = (posts || []).map(post => `
+              <div class="post-card">
+                <h4 style="margin:0 0 8px;">${post.title}</h4>
+                <small style="color:var(--muted);">by ${post.name || 'Anonymous'}</small>
+                <p style="margin:8px 0;">${post.experience}</p>
+                ${post.images ? `<img src="${post.images.split(',')[0]}" style="max-width:100%; border-radius:8px;" />` : ''}
+                <div style="margin-top:10px; display:flex; gap:10px;">
+                  <button class="btn btn-secondary" style="padding:6px 12px; font-size:0.85rem;" onclick="app.likePost('${post.id}')">👍 ${post.likes || 0}</button>
+                </div>
+              </div>
+            `).join('');
+
+            document.getElementById('postsList').innerHTML = postsHTML || '<p style="color:var(--muted);">No posts yet</p>';
+          });
+      },
+
+      renderProfile() {
+        const html = `
+          <div class="card">
+            <h3>Profile Settings</h3>
+            <form onsubmit="app.updateProfile(event)">
+              <div class="form-group">
+                <label>Name</label>
+                <input type="text" value="${this.currentUser?.name || ''}" id="profName" />
+              </div>
+              <div class="form-group">
+                <label>Email</label>
+                <input type="email" value="${this.currentUser?.email || ''}" disabled />
+              </div>
+              <div class="form-group">
+                <label>Phone</label>
+                <input type="tel" value="${this.currentUser?.phone || ''}" id="profPhone" />
+              </div>
+              <div class="form-group">
+                <label>City</label>
+                <input type="text" value="${this.currentUser?.city || ''}" id="profCity" />
+              </div>
+              <div class="form-group">
+                <label>Country</label>
+                <input type="text" value="${this.currentUser?.country || ''}" id="profCountry" />
+              </div>
+              <button type="submit" class="btn btn-primary">Save Changes</button>
+            </form>
+          </div>
+        `;
+
+        document.getElementById('content').innerHTML = html;
+      },
+
+      renderAdmin() {
+        const html = `
+          <div class="card">
+            <h3>Admin Dashboard</h3>
+            <p style="color:var(--muted);">Platform analytics and user trends</p>
+          </div>
+
+          <div class="grid two" id="statsGrid"></div>
+        `;
+
+        document.getElementById('content').innerHTML = html;
+
+        fetch(`${API_URL}/admin/stats`)
+          .then(async (r) => {
+            if (!r.ok) {
+              const payload = await r.json().catch(() => ({}));
+              throw new Error(payload.error || 'Admin access required');
+            }
+            return r.json();
+          })
+          .then(stats => {
+            const statsHTML = `
+              <div class="card">
+                <h4>Total Users</h4>
+                <p style="font-size:2rem; margin:10px 0; color:var(--gold);">${stats.totalUsers || 0}</p>
+              </div>
+              <div class="card">
+                <h4>Total Trips</h4>
+                <p style="font-size:2rem; margin:10px 0; color:var(--teal);">${stats.totalTrips || 0}</p>
+              </div>
+              <div class="card">
+                <h4>Community Posts</h4>
+                <p style="font-size:2rem; margin:10px 0; color:var(--primary);">${stats.totalPosts || 0}</p>
+              </div>
+            `;
+            document.getElementById('statsGrid').innerHTML = statsHTML;
+          })
+          .catch((err) => {
+            document.getElementById('statsGrid').innerHTML = `<div class="card"><p style="color:var(--muted);">${err.message}</p></div>`;
+          });
+      },
+
+      renderLogin() {
+        const html = `
+          <div class="card" style="max-width:400px; margin:0 auto;">
+            <h3 style="text-align:center;">Sign In</h3>
+            <form onsubmit="app.login(event)">
+              <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="loginEmail" required />
+              </div>
+              <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="loginPwd" required />
+              </div>
+              <button type="submit" class="btn btn-primary" style="width:100%;">Sign In</button>
+              <p style="text-align:center; margin-top:15px; color:var(--muted);">
+                Don't have an account? <a href="#" onclick="app.route('/register'); return false;" style="color:var(--gold);">Register here</a>
+              </p>
+            </form>
+          </div>
+        `;
+
+        document.getElementById('content').innerHTML = html;
+      },
+
+      renderRegister() {
+        const html = `
+          <div class="card" style="max-width:500px; margin:0 auto;">
+            <h3 style="text-align:center;">Create Account</h3>
+            <form onsubmit="app.register(event)">
+              <div class="grid two">
+                <div class="form-group">
+                  <label>First Name</label>
+                  <input type="text" id="regName" required />
+                </div>
+                <div class="form-group">
+                  <label>Last Name</label>
+                  <input type="text" id="regLast" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="regEmail" required />
+              </div>
+              <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="regPwd" required />
+              </div>
+              <div class="grid two">
+                <div class="form-group">
+                  <label>City</label>
+                  <input type="text" id="regCity" />
+                </div>
+                <div class="form-group">
+                  <label>Country</label>
+                  <input type="text" id="regCountry" />
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary" style="width:100%;">Create Account</button>
+            </form>
+          </div>
+        `;
+
+        document.getElementById('content').innerHTML = html;
+      },
+
+      showCreateTripModal() {
+        const html = `
+          <h3>Create New Trip</h3>
+          <form onsubmit="app.createTrip(event)">
+            <div class="form-group">
+              <label>Trip Name</label>
+              <input type="text" id="tripName" required />
+            </div>
+            <div class="form-group">
+              <label>Description</label>
+              <textarea id="tripDesc" rows="3"></textarea>
+            </div>
+            <div class="grid two">
+              <div class="form-group">
+                <label>Start Date</label>
+                <input type="date" id="tripStart" required />
+              </div>
+              <div class="form-group">
+                <label>End Date</label>
+                <input type="date" id="tripEnd" required />
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Budget (USD)</label>
+              <input type="number" id="tripBudget" min="0" required />
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%;">Create Trip</button>
+          </form>
+        `;
+
+        this.showModal(html);
+      },
+
+      showAddStopModal(tripId) {
+        const html = `
+          <h3>Add City to Trip</h3>
+          <form onsubmit="app.addStop(event, '${tripId}')">
+            <div class="form-group">
+              <label>Select City</label>
+              <select id="stopCity" required>
+                <option value="">-- Choose a city --</option>
+                ${this.cities.map(c => `<option value="${c.id}">${c.name}, ${c.country}</option>`).join('')}
+              </select>
+            </div>
+            <div class="grid two">
+              <div class="form-group">
+                <label>Arrival Date</label>
+                <input type="date" id="stopArrival" required />
+              </div>
+              <div class="form-group">
+                <label>Departure Date</label>
+                <input type="date" id="stopDepart" required />
+              </div>
+            </div>
+            <div class="grid two">
+              <div class="form-group">
+                <label>Transport Cost</label>
+                <input type="number" id="stopTransport" min="0" value="60" />
+              </div>
+              <div class="form-group">
+                <label>Stay Cost (per night)</label>
+                <input type="number" id="stopStay" min="0" value="100" />
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%;">Add Stop</button>
+          </form>
+        `;
+
+        this.showModal(html);
+      },
+
+      showCreatePostModal(tripId) {
+        const html = `
+          <h3>Share Your Experience</h3>
+          <form onsubmit="app.createPost(event, '${tripId}')" enctype="multipart/form-data">
+            <div class="form-group">
+              <label>Title</label>
+              <input type="text" id="postTitle" required />
+            </div>
+            <div class="form-group">
+              <label>Your Experience</label>
+              <textarea id="postExp" rows="4" required></textarea>
+            </div>
+            <div class="form-group">
+              <label>Upload Photos (up to 5)</label>
+              <input type="file" id="postImages" multiple accept="image/*" />
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%;">Post</button>
+          </form>
+        `;
+
+        this.showModal(html);
+      },
+
+      showModal(content) {
+        document.getElementById('modalContent').innerHTML = content;
+        document.getElementById('modal').classList.add('show');
+      },
+
+      closeModal() {
+        document.getElementById('modal').classList.remove('show');
+      },
+
+      async login(e) {
+        e.preventDefault();
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPwd').value;
+
+        try {
+          const res = await fetch(`${API_URL}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+          });
+
+          if (!res.ok) throw new Error('Login failed');
+
+          const data = await res.json();
+          this.currentUser = data.user;
+          this.loadTrips();
+          this.toast('✅ Signed in successfully!');
+          this.route('/');
+        } catch (e) {
+          this.toast('❌ Invalid email or password');
+        }
+      },
+
+      async register(e) {
+        e.preventDefault();
+        const name = document.getElementById('regName').value;
+        const email = document.getElementById('regEmail').value;
+        const password = document.getElementById('regPwd').value;
+        const city = document.getElementById('regCity').value;
+        const country = document.getElementById('regCountry').value;
+
+        try {
+          const res = await fetch(`${API_URL}/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email, password, city, country })
+          });
+
+          if (!res.ok) throw new Error('Registration failed');
+
+          this.toast('✅ Account created! Signing you in...');
+          setTimeout(() => this.route('/login'), 1000);
+        } catch (e) {
+          this.toast('❌ Registration failed');
+        }
+      },
+
+      async logout() {
+        await fetch(`${API_URL}/auth/logout`, { method: 'POST' });
+        this.currentUser = null;
+        this.trips = [];
+        this.route('/login');
+        this.toast('👋 Signed out');
+      },
+
+      async createTrip(e) {
+        e.preventDefault();
+        const name = document.getElementById('tripName').value;
+        const description = document.getElementById('tripDesc').value;
+        const start_date = document.getElementById('tripStart').value;
+        const end_date = document.getElementById('tripEnd').value;
+        const budget = Number(document.getElementById('tripBudget').value);
+
+        try {
+          const res = await fetch(`${API_URL}/trips`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, description, start_date, end_date, budget })
+          });
+
+          if (!res.ok) throw new Error('Failed to create trip');
+
+          this.toast('✅ Trip created!');
+          this.closeModal();
+          await this.loadTrips();
+          this.route('/trips');
+        } catch (e) {
+          this.toast('❌ ' + e.message);
+        }
+      },
+
+      async addStop(e, tripId) {
+        e.preventDefault();
+        const city_id = document.getElementById('stopCity').value;
+        const arrival_date = document.getElementById('stopArrival').value;
+        const depart_date = document.getElementById('stopDepart').value;
+        const transport_cost = Number(document.getElementById('stopTransport').value);
+        const stay_cost = Number(document.getElementById('stopStay').value);
+
+        try {
+          const res = await fetch(`${API_URL}/stops`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ trip_id: tripId, city_id, arrival_date, depart_date, transport_cost, stay_cost, order_num: 1 })
+          });
+
+          if (!res.ok) throw new Error('Failed to add stop');
+
+          this.toast('✅ City added to trip!');
+          this.closeModal();
+          this.route(`/trip/${tripId}`);
+        } catch (e) {
+          this.toast('❌ ' + e.message);
+        }
+      },
+
+      async createPost(e, tripId) {
+        e.preventDefault();
+        const title = document.getElementById('postTitle').value;
+        const experience = document.getElementById('postExp').value;
+        const images = document.getElementById('postImages').files;
+
+        const formData = new FormData();
+        formData.append('trip_id', tripId);
+        formData.append('title', title);
+        formData.append('experience', experience);
+        for (let file of images) formData.append('images', file);
+
+        try {
+          const res = await fetch(`${API_URL}/posts`, {
+            method: 'POST',
+            body: formData
+          });
+
+          if (!res.ok) throw new Error('Failed to create post');
+
+          this.toast('✅ Experience shared!');
+          this.closeModal();
+          this.route('/community');
+        } catch (e) {
+          this.toast('❌ ' + e.message);
+        }
+      },
+
+      async deleteTrip(tripId) {
+        if (!confirm('Delete this trip?')) return;
+
+        try {
+          const res = await fetch(`${API_URL}/trips/${tripId}`, { method: 'DELETE' });
+          if (!res.ok) throw new Error('Failed to delete');
+
+          this.toast('✅ Trip deleted');
+          await this.loadTrips();
+          this.route('/trips');
+        } catch (e) {
+          this.toast('❌ ' + e.message);
+        }
+      },
+
+      async likePost(postId) {
+        try {
+          await fetch(`${API_URL}/posts/${postId}/like`, { method: 'POST' });
+          this.route('/community');
+        } catch (e) {
+          console.error('Like failed:', e);
+        }
+      },
+
+      async updateProfile(e) {
+        e.preventDefault();
+        const name = document.getElementById('profName').value;
+        const phone = document.getElementById('profPhone').value;
+        const city = document.getElementById('profCity').value;
+        const country = document.getElementById('profCountry').value;
+
+        this.currentUser = { ...this.currentUser, name, phone, city, country };
+        this.toast('✅ Profile updated!');
+      },
+
+      toast(msg) {
+        const el = document.getElementById('toast');
+        el.textContent = msg;
+        el.style.display = 'block';
+        setTimeout(() => el.style.display = 'none', 3000);
+      }
+    };
+
+    app.init();
+  </script>
+</body>
+</html>

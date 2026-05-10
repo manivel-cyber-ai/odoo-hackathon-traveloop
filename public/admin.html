@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Traveloop Admin Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=DM+Mono:wght@400;500&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      font-family: 'Source Serif 4', serif;
+      background: linear-gradient(160deg, #0b1020, #11182d);
+      color: #eef2ff;
+    }
+
+    :root {
+      --bg: #0b1020;
+      --surface: rgba(19, 25, 45, 0.86);
+      --text: #eef2ff;
+      --muted: #9aa7c4;
+      --gold: #f7c948;
+      --teal: #46d6b2;
+      --primary: #6ea8ff;
+    }
+
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    
+    header {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(255,255,255,0.09);
+    }
+
+    h1 { margin: 0; font-family: 'Syne'; font-size: 2rem; }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .stat-card h3 {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      font-weight: normal;
+    }
+
+    .stat-card .value {
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin: 10px 0;
+    }
+
+    .stat-card.users .value { color: var(--gold); }
+    .stat-card.trips .value { color: var(--teal); }
+    .stat-card.posts .value { color: var(--primary); }
+
+    .chart-container {
+      background: var(--surface);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      position: relative;
+      height: 300px;
+    }
+
+    .chart-container h3 {
+      margin: 0 0 15px;
+      font-family: 'Syne';
+    }
+
+    canvas { max-width: 100%; }
+
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: var(--muted);
+    }
+
+    .spinner {
+      border: 3px solid rgba(255,255,255,0.1);
+      border-top: 3px solid var(--gold);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 10px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--gold), #f5db79);
+      color: #0d1020;
+      cursor: pointer;
+      font-family: 'Syne';
+      font-weight: 600;
+      margin-top: 10px;
+    }
+
+    .btn:hover { transform: translateY(-2px); }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    table th, table td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    table th {
+      background: rgba(255,255,255,0.04);
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    table tr:hover {
+      background: rgba(255,255,255,0.03);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>📊 Traveloop Admin Dashboard</h1>
+      <p style="color:var(--muted); margin:10px 0 0;">Real-time platform analytics and insights</p>
+    </header>
+
+    <div id="loading" class="loading">
+      <div class="spinner"></div>
+      <p>Loading dashboard...</p>
+    </div>
+
+    <div id="dashboard" style="display:none;">
+      <!-- Platform Stats -->
+      <div class="stats-grid">
+        <div class="stat-card users">
+          <h3>Total Users</h3>
+          <div class="value" id="totalUsers">-</div>
+          <small style="color:var(--muted);">Registered accounts</small>
+        </div>
+        <div class="stat-card trips">
+          <h3>Total Trips</h3>
+          <div class="value" id="totalTrips">-</div>
+          <small style="color:var(--muted);">Planned itineraries</small>
+        </div>
+        <div class="stat-card posts">
+          <h3>Community Posts</h3>
+          <div class="value" id="totalPosts">-</div>
+          <small style="color:var(--muted);">Shared experiences</small>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="grid">
+        <div class="chart-container">
+          <h3>👥 User Growth Trend</h3>
+          <canvas id="userTrendChart"></canvas>
+        </div>
+        <div class="chart-container">
+          <h3>✈️ Trip Analytics</h3>
+          <canvas id="tripAnalyticsChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Recent Activity -->
+      <div class="chart-container">
+        <h3>📈 Daily Activity Log</h3>
+        <div id="activityTable"></div>
+      </div>
+
+      <div style="text-align:center; margin-top:30px;">
+        <button class="btn" onclick="location.href='/'">← Back to App</button>
+        <button class="btn" onclick="location.reload()">🔄 Refresh Data</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:3000/api';
+    let userTrendChart, tripAnalyticsChart;
+
+    async function loadDashboard() {
+      try {
+        // Load statistics
+        const statsRes = await fetch(`${API_URL}/admin/stats`);
+        const stats = await statsRes.json();
+
+        document.getElementById('totalUsers').textContent = stats.totalUsers || 0;
+        document.getElementById('totalTrips').textContent = stats.totalTrips || 0;
+        document.getElementById('totalPosts').textContent = stats.totalPosts || 0;
+
+        // Load user trends
+        const trendsRes = await fetch(`${API_URL}/admin/user-trends`);
+        const trends = await trendsRes.json();
+        renderUserTrendChart(trends);
+
+        // Load trip data
+        const tripRes = await fetch(`${API_URL}/admin/trip-data`);
+        const tripData = await tripRes.json();
+        renderTripAnalyticsChart(tripData);
+        renderActivityTable(tripData);
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+      } catch (e) {
+        console.error('Dashboard load failed:', e);
+        document.getElementById('loading').innerHTML = `
+          <p style="color:#ff7f8b;">❌ Failed to load dashboard</p>
+          <p style="color:var(--muted); font-size:0.9rem;">Make sure the server is running on port 3000</p>
+        `;
+      }
+    }
+
+    function renderUserTrendChart(trends) {
+      const labels = trends.map(t => t.date || 'N/A').slice(-14);
+      const data = trends.map(t => t.new_users || 0).slice(-14);
+
+      const ctx = document.getElementById('userTrendChart').getContext('2d');
+      userTrendChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'New Users',
+            data: data,
+            borderColor: '#f7c948',
+            backgroundColor: 'rgba(247, 201, 72, 0.1)',
+            tension: 0.3,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: true, labels: { color: '#eef2ff' } } },
+          scales: {
+            y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9aa7c4' } },
+            x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9aa7c4' } }
+          }
+        }
+      });
+    }
+
+    function renderTripAnalyticsChart(tripData) {
+      const labels = tripData.map(t => t.date || 'N/A').slice(-14);
+      const tripsCreated = tripData.map(t => t.trips_created || 0).slice(-14);
+      const avgBudget = tripData.map(t => Math.round(t.avg_budget || 0)).slice(-14);
+
+      const ctx = document.getElementById('tripAnalyticsChart').getContext('2d');
+      tripAnalyticsChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Trips Created',
+              data: tripsCreated,
+              backgroundColor: '#46d6b2',
+              borderRadius: 6
+            },
+            {
+              label: 'Avg Budget ($)',
+              data: avgBudget,
+              backgroundColor: '#6ea8ff',
+              borderRadius: 6,
+              yAxisID: 'y1'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: true, labels: { color: '#eef2ff' } } },
+          scales: {
+            y: {
+              grid: { color: 'rgba(255,255,255,0.05)' },
+              ticks: { color: '#9aa7c4' },
+              title: { display: true, text: 'Trip Count', color: '#eef2ff' }
+            },
+            y1: {
+              type: 'linear',
+              position: 'right',
+              grid: { display: false },
+              ticks: { color: '#9aa7c4' },
+              title: { display: true, text: 'Budget (USD)', color: '#eef2ff' }
+            },
+            x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9aa7c4' } }
+          }
+        }
+      });
+    }
+
+    function renderActivityTable(tripData) {
+      const tableHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Trips Created</th>
+              <th>Avg Budget</th>
+              <th>Max Budget</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tripData.slice(-10).reverse().map(row => `
+              <tr>
+                <td>${row.date || 'N/A'}</td>
+                <td>${row.trips_created || 0}</td>
+                <td>$${Math.round(row.avg_budget || 0)}</td>
+                <td>$${Math.round(row.max_budget || 0)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+
+      document.getElementById('activityTable').innerHTML = tableHTML;
+    }
+
+    // Initialize on page load
+    window.addEventListener('load', loadDashboard);
+  </script>
+</body>
+</html>

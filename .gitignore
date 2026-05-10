@@ -1,0 +1,14 @@
+node_modules/
+*.db
+uploads/*
+!uploads/.gitkeep
+.env
+.env.local
+.DS_Store
+*.log
+*.tmp
+.vscode/
+.idea/
+dist/
+build/
+*.pem
